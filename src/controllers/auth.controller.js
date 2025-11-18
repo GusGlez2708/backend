@@ -51,7 +51,7 @@ async function register(req, res) {
     // La creación del perfil ahora es manejada por el trigger en la base de datos.
     // Ya no es necesario insertar el perfil manualmente desde aquí.
 
-    return res.status(201).json({ message: 'Usuario registrado. Por favor, revisa tu email para confirmar la cuenta.' });
+    return res.status(201).json({ message: 'Usuario registrado exitosamente.' });
   } catch (err) {
     return res.status(500).json({ message: 'Error interno en el registro', error: err.message });
   }
