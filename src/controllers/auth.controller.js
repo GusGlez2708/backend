@@ -23,7 +23,12 @@ async function register(req, res) {
     // Crear usuario en Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        data: {
+          username: username
+        }
+      }
     });
 
     if (error) {
@@ -43,19 +48,10 @@ async function register(req, res) {
       return res.status(400).json({ message: error.message });
     }
 
-    const user = data.user;
+    // La creación del perfil ahora es manejada por el trigger en la base de datos.
+    // Ya no es necesario insertar el perfil manualmente desde aquí.
 
-    // Crear perfil asociado en la tabla profiles
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({ id: user.id, username, rol: 'user' });
-
-    if (profileError) {
-      console.error('Supabase insert profile error:', profileError);
-      return res.status(400).json({ message: profileError.message });
-    }
-
-    return res.status(201).json({ message: 'Usuario registrado correctamente' });
+    return res.status(201).json({ message: 'Usuario registrado. Por favor, revisa tu email para confirmar la cuenta.' });
   } catch (err) {
     return res.status(500).json({ message: 'Error interno en el registro', error: err.message });
   }
