@@ -1,5 +1,6 @@
 function isAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  // CORRECCIÓN: Cambiamos 'req.user.role' por 'req.user.rol'
+  if (!req.user || req.user.rol !== 'admin') {
     return res.status(403).json({ message: 'Admin role required' });
   }
 
