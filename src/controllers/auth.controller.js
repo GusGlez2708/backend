@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabaseClient');
+const { supabase, supabaseAdmin } = require('../config/supabaseClient');
 const jwt = require('jsonwebtoken');
 
 async function register(req, res) {
@@ -46,7 +46,7 @@ async function register(req, res) {
     const user = data.user;
 
     // Crear perfil asociado en la tabla profiles
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({ id: user.id, username, rol: 'user' });
 
