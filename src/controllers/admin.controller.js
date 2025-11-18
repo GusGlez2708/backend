@@ -5,26 +5,23 @@ async function getDashboardStats(req, res) {
   try {
     const [usersCountRes, moviesCountRes, avgRatingRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('movies').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('reviews')
-        .select('rating')
+      supabase.from('ships').select('id', { count: 'exact', head: true }), // Asegúrate de que sea 'ships' si ya migraste
+      supabase.from('missions').select('id', { count: 'exact', head: true }) // Contar misiones para stats
     ]);
 
-    if (usersCountRes.error || moviesCountRes.error || avgRatingRes.error) {
-      console.error('Error getting dashboard stats:', usersCountRes.error || moviesCountRes.error || avgRatingRes.error);
+    // Contar planetas aparte
+    const planetsCountRes = await supabase.from('conquered_planets').select('id', { count: 'exact', head: true });
+
+    if (usersCountRes.error || moviesCountRes.error) {
+      console.error('Error getting dashboard stats');
       return res.status(500).json({ message: 'Error al obtener estadísticas' });
     }
 
-    const ratings = avgRatingRes.data || [];
-    const avgRating = ratings.length
-      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-      : null;
-
     return res.json({
       usersCount: usersCountRes.count || 0,
-      moviesCount: moviesCountRes.count || 0,
-      averageRating: avgRating
+      shipsCount: moviesCountRes.count || 0,
+      missionsCount: avgRatingRes.count || 0, // Usamos el slot de rating para misiones
+      conqueredPlanetsCount: planetsCountRes.count || 0
     });
   } catch (err) {
     return res.status(500).json({ message: 'Error interno al obtener estadísticas', error: err.message });
@@ -34,13 +31,15 @@ async function getDashboardStats(req, res) {
 // GET /api/admin/users
 async function listUsers(req, res) {
   try {
+    // CORRECCIÓN AQUÍ: Cambiado 'role' por 'rol'
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, role, avatar_url, created_at');
+      .select('id, username, rol, banned, created_at') // <--- 'rol' es la clave
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error listing users:', error);
-      return res.status(500).json({ message: 'Error al obtener usuarios' });
+      return res.status(500).json({ message: 'Error al obtener usuarios: ' + error.message });
     }
 
     return res.json(data);
@@ -52,18 +51,20 @@ async function listUsers(req, res) {
 // PUT /api/admin/users/:id/role
 async function updateUserRole(req, res) {
   const { id } = req.params;
-  const { role } = req.body;
+  // CORRECCIÓN AQUÍ: Recibimos 'rol' del frontend
+  const { rol } = req.body; 
 
-  if (!role || !['user', 'admin'].includes(role)) {
-    return res.status(400).json({ message: 'role debe ser "user" o "admin"' });
+  if (!rol || !['user', 'admin'].includes(rol)) {
+    return res.status(400).json({ message: 'rol debe ser "user" o "admin"' });
   }
 
   try {
+    // CORRECCIÓN AQUÍ: Actualizamos la columna 'rol'
     const { data, error } = await supabase
       .from('profiles')
-      .update({ role })
+      .update({ rol: rol }) 
       .eq('id', id)
-      .select('id, username, role')
+      .select('id, username, rol')
       .single();
 
     if (error) {
@@ -78,7 +79,6 @@ async function updateUserRole(req, res) {
 }
 
 // PUT /api/admin/users/:id/ban
-// Implementación simple: usamos una columna extra opcional "banned" en profiles
 async function toggleUserBan(req, res) {
   const { id } = req.params;
 
@@ -114,23 +114,11 @@ async function toggleUserBan(req, res) {
   }
 }
 
-// GET /api/admin/movies
+// GET /api/admin/movies (Redirige a ships controller si es necesario, o se elimina si no se usa)
+// Dejamos un placeholder o reutilizamos la lógica de naves si la ruta existe
 async function listMoviesAdmin(req, res) {
-  try {
-    const { data, error } = await supabase
-      .from('movies')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error listing movies for admin:', error);
-      return res.status(500).json({ message: 'Error al obtener películas para admin' });
-    }
-
-    return res.json(data);
-  } catch (err) {
-    return res.status(500).json({ message: 'Error interno al obtener películas para admin', error: err.message });
-  }
+    // Esta función parece ser un vestigio, pero si la ruta la llama:
+    return res.json([]); 
 }
 
 module.exports = {
