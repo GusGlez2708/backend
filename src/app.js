@@ -12,7 +12,7 @@ const app = express();
 
 // Configuración de CORS
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:4000', 'https://cinenoir-api.onrender.com'],
+  origin: ['http://localhost:4200', 'http://localhost:4000', 'https://flotaimperial.onrender.com', 'https://*.onrender.com'],
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
